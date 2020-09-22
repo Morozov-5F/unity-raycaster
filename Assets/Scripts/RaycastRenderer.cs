@@ -21,15 +21,15 @@ public class RaycastRenderer : MonoBehaviour
     {
         _camera = GetComponent<Camera>();
 
-        int width = targetResolution > _camera.pixelWidth ? _camera.pixelWidth : targetResolution;
+        var width = targetResolution > _camera.pixelWidth ? _camera.pixelWidth : targetResolution;
         _renderTexture = new Texture2D(width, (int) (width / _camera.aspect))
         {
             filterMode = FilterMode.Point, alphaIsTransparency = false
         };
 
-        for (int i = 0; i < _renderTexture.width; ++i)
+        for (var i = 0; i < _renderTexture.width; ++i)
         {
-            for (int j = 0; j < _renderTexture.height; ++j)
+            for (var j = 0; j < _renderTexture.height; ++j)
             {
                 _renderTexture.SetPixel(i, j, Color.white);
             }            
@@ -41,30 +41,37 @@ public class RaycastRenderer : MonoBehaviour
         _xdir = _ydir = 1;
     }
 
+    private RaycastHit[] _hits = new RaycastHit[1];
+
     // Update is called once per frame
     void Update()
     {
-        if (Time.time - _timeSinceLastMove < 0.05f)
+        Vector3 a = new Vector3();
+        int width = _renderTexture.width;
+        int height = _renderTexture.height;
+        for (var x = 0; x < width; ++x)
         {
-            return;
-        }
-        
-        _renderTexture.SetPixel(_x, _y, Color.white);
-
-        _x = _x + _xdir;
-        if (_x == _renderTexture.width - 1 || _x == 0)
-        {
-            _xdir = -_xdir;
-            _y = _y + _ydir;
-            if (_y == 0 || _y == _renderTexture.height - 1)
+            for (var y = 0; y < height; ++y)
             {
-                _ydir = -_ydir;
+                a.x = (float) x / (width - 1);
+                a.y = (float) y / (height - 1);
+
+                var ray = _camera.ViewportPointToRay(a);
+                
+                Color newColor;
+                if (0 == Physics.RaycastNonAlloc(ray, _hits, 10.0f, 1 << 8))
+                {
+                    var t = 0.5f * (ray.direction.normalized.y + 1.0f);
+                    newColor = Color.Lerp(new Color(1.0f, 1.0f, 1.0f), new Color(0.5f, 0.7f, 1.0f), t);
+                }
+                else
+                {
+                    newColor = Color.red;
+                }
+                _renderTexture.SetPixel(x, y, newColor);
             }
         }
-
-        _renderTexture.SetPixel(_x, _y, Color.black);
         _renderTexture.Apply();
-        
-        _timeSinceLastMove = Time.time;
     }
+
 }
