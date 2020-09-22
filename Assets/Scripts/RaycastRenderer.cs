@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class RaycastRenderer : MonoBehaviour
 {
     public Image imageToRender;
-    public int downscaleFactor;
+    public int targetResolution = 400;
     
     
     private Texture2D _renderTexture;
@@ -15,14 +15,17 @@ public class RaycastRenderer : MonoBehaviour
 
     private int _x, _y, _xdir, _ydir;
     private float _timeSinceLastMove;
-    
+
     // Start is called before the first frame update
     void Start()
     {
         _camera = GetComponent<Camera>();
-        _renderTexture = new Texture2D(_camera.pixelWidth / downscaleFactor, _camera.pixelHeight / downscaleFactor);
-        _renderTexture.filterMode = FilterMode.Point;
-        _renderTexture.alphaIsTransparency = false;
+
+        int width = targetResolution > _camera.pixelWidth ? _camera.pixelWidth : targetResolution;
+        _renderTexture = new Texture2D(width, (int) (width / _camera.aspect))
+        {
+            filterMode = FilterMode.Point, alphaIsTransparency = false
+        };
 
         for (int i = 0; i < _renderTexture.width; ++i)
         {
