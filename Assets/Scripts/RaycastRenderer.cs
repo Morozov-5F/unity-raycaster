@@ -73,14 +73,15 @@ public class RaycastRenderer : MonoBehaviour
                 var rayDirection = lowerLeft + horizontal * u + vertical * v - cameraTransform.position;
                 var ray = new Ray(cameraPosition, rayDirection);
                 Color newColor;
-                if (0 == Physics.RaycastNonAlloc(ray, _hits, 10.0f, 1 << 8))
+                if (0 == Physics.RaycastNonAlloc(ray, _hits, 15.0f, 1 << 8))
                 {
                     var t = 0.5f * (ray.direction.normalized.y + 1.0f);
                     newColor = Color.Lerp(new Color(1.0f, 1.0f, 1.0f), new Color(0.5f, 0.7f, 1.0f), t);
                 }
                 else
                 {
-                    newColor = Color.red;
+                    var normal = 0.5f * (_hits[0].normal + new Vector3(1, 1, 1));
+                    newColor = new Color(normal.x, normal.y, normal.z);
                 }
                 _renderTexture.SetPixel(x, y, newColor);
             }
