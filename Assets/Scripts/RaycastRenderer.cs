@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEditorInternal;
 using UnityEngine;
@@ -21,6 +22,10 @@ public class RaycastRenderer : MonoBehaviour
     {
         _camera = GetComponent<Camera>();
 
+        var h = Mathf.Tan(Mathf.PI * _camera.fieldOfView / 360);
+        _viewportHeight = h * 2;
+        _viewportWidth = _viewportHeight * _camera.aspect;
+        
         var width = targetResolution > _camera.pixelWidth ? _camera.pixelWidth : targetResolution;
         _renderTexture = new Texture2D(width, (int) (width / _camera.aspect))
         {
@@ -42,22 +47,31 @@ public class RaycastRenderer : MonoBehaviour
     }
 
     private RaycastHit[] _hits = new RaycastHit[1];
-
+    
+    private float _viewportHeight;
+    private float _viewportWidth;
+    
     // Update is called once per frame
     void Update()
     {
-        Vector3 a = new Vector3();
-        int width = _renderTexture.width;
-        int height = _renderTexture.height;
+        var width = _renderTexture.width;
+        var height = _renderTexture.height;
+        
+        var cameraTransform = _camera.transform;
+        var cameraPosition = cameraTransform.position;
+        var horizontal = cameraTransform.right * _viewportWidth;
+        var vertical = cameraTransform.up * _viewportHeight;
+        var lowerLeft = cameraPosition - 0.5f * horizontal - 0.5f * vertical + cameraTransform.forward; 
+        
         for (var x = 0; x < width; ++x)
         {
             for (var y = 0; y < height; ++y)
             {
-                a.x = (float) x / (width - 1);
-                a.y = (float) y / (height - 1);
+                var u = (float) x / (width - 1);
+                var v = (float) y / (height - 1);
 
-                var ray = _camera.ViewportPointToRay(a);
-                
+                var rayDirection = lowerLeft + horizontal * u + vertical * v - cameraTransform.position;
+                var ray = new Ray(cameraPosition, rayDirection);
                 Color newColor;
                 if (0 == Physics.RaycastNonAlloc(ray, _hits, 10.0f, 1 << 8))
                 {
